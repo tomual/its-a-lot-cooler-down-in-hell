@@ -12,14 +12,14 @@ public class Player : MonoBehaviour
     Vector3 movement;
     Quaternion rotation = Quaternion.identity;
     float turnSpeed = 20f;
-    float speed = 2f;
+    public float speed;
 
     Interactable targetInteractable;
 
     // Start is called before the first frame update
     void Start()
     {
-        animator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
         rigidbody = GetComponent<Rigidbody>();
         canMove = true;
     }
@@ -55,6 +55,7 @@ public class Player : MonoBehaviour
         {
             float horizontal = Input.GetAxis("Horizontal");
             float vertical = Input.GetAxis("Vertical");
+
             movement.Set(horizontal, 0f, vertical);
             movement.Normalize();
 
@@ -65,21 +66,17 @@ public class Player : MonoBehaviour
             animator.SetBool("Walking", walking);
 
             Vector3 desiredForward = Vector3.RotateTowards(transform.forward, movement, turnSpeed * Time.deltaTime, 0f);
-
             rotation = Quaternion.LookRotation(desiredForward);
+
+
+            rigidbody.MovePosition(rigidbody.position + movement * speed);
+            rigidbody.MoveRotation(rotation);
+
         }
         else
         {
             rigidbody.velocity = Vector3.zero;
             rigidbody.angularVelocity = Vector3.zero;
-        }
-    }
-    private void OnAnimatorMove()
-    {
-        if (canMove && !IsDead())
-        {
-            rigidbody.MovePosition(rigidbody.position + movement * animator.deltaPosition.magnitude * speed);
-            rigidbody.MoveRotation(rotation);
         }
     }
 
