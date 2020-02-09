@@ -12,6 +12,8 @@ public class Player : MonoBehaviour
     float turnSpeed = 20f;
     float speed = 2f;
 
+    Interactable targetInteractable;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -27,27 +29,32 @@ public class Player : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (CanMove())
+        if (Input.GetButton("Fire1"))
         {
-            float horizontal = Input.GetAxis("Horizontal");
-            float vertical = Input.GetAxis("Vertical");
-            movement.Set(horizontal, 0f, vertical);
-            movement.Normalize();
-
-            bool hasHorizontalInput = !Mathf.Approximately(horizontal, 0f);
-            bool hasVerticalInput = !Mathf.Approximately(vertical, 0f);
-
-            bool walking = hasHorizontalInput || hasVerticalInput;
-            animator.SetBool("Walking", walking);
-
-            Vector3 desiredForward = Vector3.RotateTowards(transform.forward, movement, turnSpeed * Time.deltaTime, 0f);
-            
-            rotation = Quaternion.LookRotation(desiredForward);
+            if (targetInteractable)
+            {
+                targetInteractable.Talk();
+            }
         }
+
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        movement.Set(horizontal, 0f, vertical);
+        movement.Normalize();
+
+        bool hasHorizontalInput = !Mathf.Approximately(horizontal, 0f);
+        bool hasVerticalInput = !Mathf.Approximately(vertical, 0f);
+
+        bool walking = hasHorizontalInput || hasVerticalInput;
+        animator.SetBool("Walking", walking);
+
+        Vector3 desiredForward = Vector3.RotateTowards(transform.forward, movement, turnSpeed * Time.deltaTime, 0f);
+            
+        rotation = Quaternion.LookRotation(desiredForward);
     }
     private void OnAnimatorMove()
     {
-        if (CanMove() && !IsDead())
+        if (!IsDead())
         {
             rigidbody.MovePosition(rigidbody.position + movement * animator.deltaPosition.magnitude * speed);
             rigidbody.MoveRotation(rotation);
@@ -59,8 +66,21 @@ public class Player : MonoBehaviour
         return false;
     }
 
-    bool CanMove()
+    private void OnTriggerStay(Collider other)
     {
-        return true;
+        if (other.GetComponent<Interactable>())
+        {
+            UIManager.instance.ShowTalkPrompt(other.gameObject);
+            targetInteractable = other.GetComponent<Interactable>();
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.GetComponent<Interactable>())
+        {
+            UIManager.instance.HideTalkPrompt();
+            targetInteractable = null;
+        }
     }
 }
