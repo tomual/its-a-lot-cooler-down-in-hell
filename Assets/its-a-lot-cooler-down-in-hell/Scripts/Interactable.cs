@@ -6,10 +6,12 @@ public class Interactable : MonoBehaviour
 {
     List<string> lines;
     int index;
+    Player player;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
+        player = GameObject.Find("Player").GetComponent<Player>();
         index = 0;
         lines = new List<string>();
         lines.Add("First line");
@@ -30,6 +32,16 @@ public class Interactable : MonoBehaviour
 
     public string NextLine()
     {
+        if (index >= lines.Count)
+        {
+            return null;
+        }
         return lines[index++];
+    }
+
+    public void EndTalk()
+    {
+        index = 0;
+        player.canMove = true;
     }
 }

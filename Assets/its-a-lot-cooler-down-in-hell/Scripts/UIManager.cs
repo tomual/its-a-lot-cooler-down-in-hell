@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -10,6 +11,10 @@ public class UIManager : MonoBehaviour
 
     string dialogueLine;
     int dialogueLineIndex;
+    Text textDialogue;
+    Interactable talker;
+
+    public bool isCooledDown;
 
     // Start is called before the first frame update
     void Awake()
@@ -26,21 +31,26 @@ public class UIManager : MonoBehaviour
 
         promptTalk = GameObject.Find("PromptTalk");
         dialogue = GameObject.Find("Dialogue");
+        textDialogue = GameObject.Find("Dialogue/Text").GetComponent<Text>();
         HideTalkPrompt();
         HideDialogue();
 
         dialogueLineIndex = 0;
+        isCooledDown = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (talker && isCooledDown && Input.GetButton("Fire1"))
+        {
+            ShowNextLine();
+            StartCoroutine(CooldownAct());
+        }
     }
 
     public void ShowTalkPrompt(GameObject interactable)
     {
-        Debug.Log(interactable.transform.position);
         GameObject target = interactable;
         RectTransform canvasRect = GameObject.Find("Canvas").GetComponent<RectTransform>();
 
@@ -70,15 +80,49 @@ public class UIManager : MonoBehaviour
 
     public void StartDialogue(Interactable interactable)
     {
+        talker = interactable;
+    }
+
+    void EndDialogue()
+    {
+        textDialogue.text = "";
         dialogueLineIndex = 0;
-        dialogueLine = interactable.NextLine();
-        ShowDialogue();
-        StartCoroutine(ScrollLine());
+        dialogueLine = "";
+        talker.EndTalk();
+        HideDialogue();
+        talker = null;
+    }
+
+    public void ShowNextLine()
+    {
+        textDialogue.text = "";
+        dialogueLineIndex = 0;
+        dialogueLine = talker.NextLine();
+        if (!string.IsNullOrEmpty(dialogueLine))
+        {
+            ShowDialogue();
+            StartCoroutine(ScrollLine());
+        } 
+        else
+        {
+            EndDialogue();
+        }
     }
 
     IEnumerator ScrollLine()
     {
+        yield return new WaitForSeconds(0.01f);
+        if (dialogueLineIndex < dialogueLine.Length)
+        {
+            textDialogue.text += dialogueLine[dialogueLineIndex++];
+            StartCoroutine(ScrollLine());
+        }
+    }
 
-        yield return new WaitForSeconds(0.2f);
+    public IEnumerator CooldownAct()
+    {
+        isCooledDown = false;
+        yield return new WaitForSeconds(0.5f);
+        isCooledDown = true;
     }
 }
